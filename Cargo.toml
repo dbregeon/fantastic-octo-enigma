@@ -1,0 +1,21 @@
+[package]
+name = "fantastic-octo-enigma"
+version = "0.1.0"
+authors = ["dbregeon <denis.bregeon@digitalbrikes.com>"]
+
+[dependencies]
+log= "0.4.8"
+env_logger= "0.7.1"
+lazy_static = "1.4.0"
+socket2 = { version = "0.3.11", features = ["reuseport"] }
+specs = "0.15.1"
+specs-derive = "0.4.0"
+shrev = "1.1.1"
+
+[[test]]
+name = "cucumber"
+path = "tests/cucumber.rs"
+harness = false # Allows Cucumber to print output instead of libtest
+
+[dev-dependencies]
+cucumber_rust = "0.6.5"
