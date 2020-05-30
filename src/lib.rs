@@ -4,6 +4,7 @@ extern crate specs;
 extern crate shrev;
 
 pub mod acceptor;
+pub mod placer;
 pub mod sequencer;
 pub mod oms;
 pub mod components;

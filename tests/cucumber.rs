@@ -1,12 +1,14 @@
 extern crate cucumber_rust as cucumber;
 extern crate specs;
 extern crate shrev;
+extern crate shred;
 extern crate fantastic_octo_enigma;
 
 
 use cucumber::{cucumber, before, after};
 use specs::{Dispatcher, World, WorldExt, ReaderId};
 use fantastic_octo_enigma::oms::events::OmsEvent;
+use fantastic_octo_enigma::components::placement::Placement;
 
 mod market1;
 mod market2;
@@ -15,7 +17,8 @@ mod market2;
 pub struct CukeWorld<'a> {
     ecs: World,
     dispatcher: Option<Dispatcher<'a, 'a>>,
-    reader_id: Option<ReaderId<OmsEvent>>
+    events_reader_id: Option<ReaderId<OmsEvent>>,
+    market1_reader_id: Option<ReaderId<Placement>>
 }
 
 impl <'a> cucumber::World for CukeWorld<'a> {}
@@ -24,21 +27,26 @@ impl <'a> std::default::Default for CukeWorld<'a>  {
         CukeWorld { 
             ecs: World::new(),
             dispatcher: Option::None,
-            reader_id: Option::None
+            events_reader_id: Option::None,
+            market1_reader_id: Option::None
         }
     }
 }
 
 mod requeue_steps {
     use std::str::FromStr;
+    use std::ops::Deref;
 
     use cucumber::steps;
     use specs::{WorldExt, DispatcherBuilder};
+    use shred::ResourceId;
     use shrev::EventChannel;
 
     use fantastic_octo_enigma::components::instrument::Instrument;
     use fantastic_octo_enigma::components::order::Order;
+    use fantastic_octo_enigma::components::placement::Placement;
     use fantastic_octo_enigma::acceptor::Acceptor;
+    use fantastic_octo_enigma::placer::Placer;
     use fantastic_octo_enigma::sequencer::Sequencer;
     use market1::Market1;
     use market2::Market2;
@@ -51,23 +59,25 @@ mod requeue_steps {
             let table = step.table().unwrap().clone();
             let command_channel = EventChannel::<OmsCommand>::new();
             let notification_channel = EventChannel::<OmsEvent>::new();
-
+            let market1_channel = ResourceId::new_with_dynamic_id::<EventChannel<Placement>>(1);
+            let market2_channel = ResourceId::new_with_dynamic_id::<EventChannel<Placement>>(2);
             
             world.ecs.register::<Instrument>();
             world.ecs.register::<Order>();
+            world.ecs.register::<Placement>();
 
             world.ecs.insert(command_channel);
             world.ecs.insert(notification_channel);
+            world.ecs.insert_by_id(market1_channel, EventChannel::<Placement>::new());
+            world.ecs.insert_by_id(market2_channel, EventChannel::<Placement>::new());
 
             let mut dispatcher = table.rows.iter()
                 .map(|row| row[0].as_ref())
                 .fold(DispatcherBuilder::new(), |builder, name| match name {
-                    "Sequencer" => {
-                        println!("Adding Sequencer");
-                        builder.with(Sequencer::default(), name, &[])
-                    },
-                    "Acceptor" => builder.with(Acceptor, name, &[]),
-                    "Market 1" => builder.with(Market1, name, &[]),
+                    "Sequencer" => builder.with(Sequencer::default(), name, &[]),
+                    "Acceptor" => builder.with(Acceptor, name, &["Sequencer"]),
+                    "Placer" => builder.with(Placer, name, &["Acceptor"]),
+                    "Market 1" => builder.with(Market1, name, &["Placer"]),
                     "Market 2" => builder.with(Market2, name, &[]),
                     _ => builder
             }).build();
@@ -76,8 +86,8 @@ mod requeue_steps {
 
             world.dispatcher = Option::Some(dispatcher);
 
-            world.reader_id = Option::Some(world.ecs.fetch_mut::<EventChannel::<OmsEvent>>().register_reader());
-
+            world.events_reader_id = Option::Some(world.ecs.fetch_mut::<EventChannel::<OmsEvent>>().register_reader());
+            world.market1_reader_id = world.ecs.try_fetch_mut_by_id::<EventChannel::<Placement>>(ResourceId::new_with_dynamic_id::<EventChannel<Placement>>(1)).map(|mut c| c.register_reader());
         };
 
         given "the following instrument was received:" |world, step| {
@@ -115,7 +125,7 @@ mod requeue_steps {
             let notification_channel = world.ecs.fetch_mut::<EventChannel::<OmsEvent>>();
             let mut count = 0;
             let row = &table.rows[0];
-            for event in notification_channel.read(world.reader_id.as_mut().unwrap()) {
+            for event in notification_channel.read(world.events_reader_id.as_mut().unwrap()) {
                 count = count + 1;
                 match event {
                     OmsEvent::Pending {
@@ -133,6 +143,16 @@ mod requeue_steps {
 
             }
             assert_eq!(1, count);
+        };
+
+        then "the OMS sends a Place event to Market 1" |world, step| {
+            let market1_channel = ResourceId::new_with_dynamic_id::<EventChannel<Placement>>(1);
+            let channel = world.ecs.try_fetch_mut_by_id::<EventChannel<Placement>>(market1_channel).unwrap();
+            let mut count = 0;
+            for _ in channel.read(world.market1_reader_id.as_mut().unwrap()) {
+                count = count + 1;
+            }
+            assert_eq!(1, count, "Expected one placement");
         };
 
         then regex r"^we can (.*) rules with regex$" |world, matches, step| {

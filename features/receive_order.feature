@@ -7,6 +7,7 @@ Given an OMS with:
 | System       |
 | Sequencer    |
 | Acceptor     |
+| Placer       |
 | Market 1     |
 | Market 2     |
 And the following instrument was received:
@@ -25,7 +26,8 @@ Scenario: Simple order rejection
 Given an OMS with:
 | System       |
 | Sequencer    |
-| Creator |
+| Acceptor     |
+| Placer       |
 | Market 1     |
 | Market 2     |
 When an order is sent:
@@ -41,7 +43,8 @@ Scenario: Order creation and cancellation in one iteration
 Given an OMS with:
 | System       |
 | Sequencer    |
-| Creator |
+| Acceptor     |
+| Placer       |
 | Market 1     |
 | Market 2     |
 And the following instrument was received:

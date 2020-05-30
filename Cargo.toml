@@ -7,10 +7,11 @@ authors = ["dbregeon <denis.bregeon@digitalbrikes.com>"]
 log= "0.4.8"
 env_logger= "0.7.1"
 lazy_static = "1.4.0"
-socket2 = { version = "0.3.11", features = ["reuseport"] }
-specs = "0.15.1"
-specs-derive = "0.4.0"
+socket2 = { version = "0.3.12", features = ["reuseport"] }
+specs = "0.16.1"
+specs-derive = "0.4.1"
 shrev = "1.1.1"
+shred = "0.10.2"
 
 [[test]]
 name = "cucumber"
@@ -18,4 +19,4 @@ path = "tests/cucumber.rs"
 harness = false # Allows Cucumber to print output instead of libtest
 
 [dev-dependencies]
-cucumber_rust = "0.6.5"
+cucumber_rust = "0.6.8"

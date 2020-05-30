@@ -1,6 +1,6 @@
 use specs::{Component, VecStorage};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Placement {
 
 }

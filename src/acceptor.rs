@@ -19,12 +19,17 @@ impl<'a> System<'a> for Acceptor {
             match command {
                 OmsCommand::CreateOrder {order_id, quantity, order_type, time_in_force, instrument_id, market_id} =>  {
                     let entity = entities.create();
-                    let order_entity = order.insert(entity, Order {}).unwrap();
-                    let pending = OmsEvent::Pending { 
-                        order_id: order_id.clone(),
-                        quantity: *quantity
-                    };
-                    notification_channel.single_write(pending);
+                    match order.insert(entity, Order {}) {
+                        Ok(None) => {
+                            let pending = OmsEvent::Pending { 
+                                order_id: order_id.clone(),
+                                quantity: *quantity
+                            };
+                            notification_channel.single_write(pending);
+                        },
+                        _ => {}
+                    }
+                    
                 },
                 _ => {}
             }
