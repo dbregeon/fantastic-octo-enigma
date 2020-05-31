@@ -1,4 +1,3 @@
-use oms::commands::OmsCommand;
 
 #[derive(Default)]
 pub struct Stamper {
@@ -15,6 +14,8 @@ impl Stamper {
 
 #[test]
 fn stamp_increases_the_sequence_number() {
+    use oms::commands::OmsCommand;
+
     let in_bound = OmsCommand::DefineInstrument { id: 1, dml_id: "Test".to_string()};
     let mut tested_stamper = Stamper::default();
     for i in 1..9 {
@@ -25,6 +26,8 @@ fn stamp_increases_the_sequence_number() {
 
 #[test]
 fn stamp_sets_the_sequence_number_on_the_event() {
+    use oms::commands::OmsCommand;
+
     let in_bound = OmsCommand::DefineInstrument { id: 1, dml_id: "Test".to_string()};
     let mut tested_stamper = Stamper::default();
     for i in 1..9 {

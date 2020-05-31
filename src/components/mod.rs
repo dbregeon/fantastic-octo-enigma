@@ -6,6 +6,7 @@ pub mod sequence;
 pub mod placement;
 pub mod order;
 pub mod instrument;
+pub mod markers;
 
 impl Component for OmsCommand {
     type Storage = VecStorage<Self>;

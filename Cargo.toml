@@ -8,8 +8,8 @@ log= "0.4.8"
 env_logger= "0.7.1"
 lazy_static = "1.4.0"
 socket2 = { version = "0.3.12", features = ["reuseport"] }
-specs = "0.16.1"
 specs-derive = "0.4.1"
+specs = { version = "0.16.1", features = ["specs-derive"] }
 shrev = "1.1.1"
 shred = "0.10.2"
 

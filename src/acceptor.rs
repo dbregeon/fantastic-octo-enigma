@@ -1,6 +1,7 @@
 use specs::{System, WriteStorage, ReadStorage, Join, Write, Entities};
 use shrev::EventChannel;
 use components::order::Order;
+use components::markers::New;
 use components::sequence::Sequence;
 
 use oms::commands::OmsCommand;
@@ -12,24 +13,21 @@ impl<'a> System<'a> for Acceptor {
     // These are the resources required for execution.
     // You can also define a struct and `#[derive(SystemData)]`,
     // see the `full` example.
-    type SystemData = (Entities<'a>, Write<'a, EventChannel<OmsEvent>>, ReadStorage<'a, Sequence>, ReadStorage<'a, OmsCommand>, WriteStorage<'a, Order>);
+    type SystemData = (Entities<'a>, Write<'a, EventChannel<OmsEvent>>, ReadStorage<'a, Sequence>, ReadStorage<'a, OmsCommand>, WriteStorage<'a, Order>, WriteStorage<'a, New>);
 
-    fn run(&mut self, (mut entities, mut notification_channel, sequence, command, mut order): Self::SystemData) {
+    fn run(&mut self, (entities, mut notification_channel, sequence, command, mut order, mut new_storage): Self::SystemData) {
         for (_sequence, command) in (&sequence, &command).join() {
             match command {
                 OmsCommand::CreateOrder {order_id, quantity, order_type, time_in_force, instrument_id, market_id} =>  {
-                    let entity = entities.create();
-                    match order.insert(entity, Order {}) {
-                        Ok(None) => {
-                            let pending = OmsEvent::Pending { 
-                                order_id: order_id.clone(),
-                                quantity: *quantity
-                            };
-                            notification_channel.single_write(pending);
-                        },
-                        _ => {}
-                    }
-                    
+                    entities.build_entity()
+                        .with(Order {}, &mut order)
+                        .with(New, &mut new_storage)
+                        .build();
+                        let pending = OmsEvent::Pending { 
+                            order_id: order_id.clone(),
+                            quantity: *quantity
+                        };
+                        notification_channel.single_write(pending);
                 },
                 _ => {}
             }

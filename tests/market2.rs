@@ -9,7 +9,7 @@ impl<'a> System<'a> for Market2 {
     // see the `full` example.
     type SystemData = (ReadStorage<'a, Placement>);
 
-    fn run(&mut self, (mut placement): Self::SystemData) {
+    fn run(&mut self, (_placement): Self::SystemData) {
         // The `.join()` combines multiple component storages,
         // so we get access to all entities which have
         // both a position and a velocity.

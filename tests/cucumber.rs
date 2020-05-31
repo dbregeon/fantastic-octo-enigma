@@ -35,7 +35,6 @@ impl <'a> std::default::Default for CukeWorld<'a>  {
 
 mod requeue_steps {
     use std::str::FromStr;
-    use std::ops::Deref;
 
     use cucumber::steps;
     use specs::{WorldExt, DispatcherBuilder};

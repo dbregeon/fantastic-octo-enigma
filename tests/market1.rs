@@ -12,7 +12,7 @@ pub struct Market1SystemData<'a> {
 }
 
 impl <'a> SystemData<'a> for Market1SystemData<'a> {
-    fn setup(world: &mut World) {
+    fn setup(_: &mut World) {
     }
 
     fn fetch(world: &'a World) -> Self {
